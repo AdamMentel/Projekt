@@ -1,11 +1,26 @@
 <?php
-session_start(); //otvorenie session
 
-//zistenie ci je session nastavene
-if(isset($_SESSION['username']) ) {
-     
-    echo 'Welcome '.$_SESSION['username'].'<br>';
+$servername = "localhost";
+$username = "mentel";
+$password = "Heslo123";
+$dbname = "mentel3A2";
 
-    echo 'Click here to <a href = "logout.php" tite = "Logout">logout.';//odkaz na odhlasenie
+$connection = new mysqli($servername, $username, $password, $dbname);
+
+
+if ($connection->connect_error) {
+    die("Chyba pripojenie k db: " . $connection->connect_error);
 }
+
+$sql = "SELECT id, nazov FROM t_produkt";
+
+$vysledok = $connection->query($sql);
+
+$pocet = $vysledok->num_rows;
+
+if ($pocet>0){
+    while($riadok = $vysledok->fetch_assoc() ){
+        echo "Produkt ".$riadok["id"]." je: " .$riadok["nazov"]." <br />";
+    }
+} 
 ?>
