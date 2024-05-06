@@ -11,8 +11,28 @@ $connection = new mysqli($servername, $username, $password, $dbname);
 if ($connection->connect_error) {
     die("Chyba pripojenie k db: " . $connection->connect_error);
 }
+// Spracovanie filtra pre minimálnu cenu
+$cena_min = 0;
+$cena_max = 9999;
 
-$sql = "SELECT id, nazov, popis FROM t_produkty";
+/*$cena_min = isset($_POST['cena_min']);
+// Spracovanie filtra pre maximálnu cenu
+$cena_max = isset($_POST['cena_max']);*/
+
+// Sestavenie SQL dotazu s použitím filtrov a zoradenia
+
+$sql = "SELECT t_produkty.*, t_kategoria.kategoria FROM t_produkty INNER JOIN t_kategoria ON t_produkty.kategoria=t_kategoria.id ORDER BY nazov ASC";
+
+if(isset($_POST['zoradenie'])){
+    $zoradenie = $_POST['zoradenie'];
+    if($zoradenie == 'desc'){
+            $sql = "SELECT t_produkty.*, t_kategoria.kategoria FROM t_produkty INNER JOIN t_kategoria ON t_produkty.kategoria=t_kategoria.id WHERE cena BETWEEN $cena_min AND $cena_max ORDER BY nazov DESC";
+    }
+    if($zoradenie == 'asc'){
+        $sql = "SELECT t_produkty.*, t_kategoria.kategoria FROM t_produkty INNER JOIN t_kategoria ON t_produkty.kategoria=t_kategoria.id WHERE cena BETWEEN $cena_min AND $cena_max ORDER BY nazov ASC";
+    }
+}
+
 
 $vysledok = $connection->query($sql);
 
@@ -76,28 +96,58 @@ $pocet = $vysledok->num_rows;
     </style>
 </head>
 <body>
-    <div class="container">
+<div class="container">
         <h2>Tabuľka produktov</h2>
+        <!-- Formulár pre filtre a zoradenie -->
+        <form method="post">
+            <label for="cena_min">Minimálna cena:</label>
+            <input type="number" name="cena_min">
+            <label for="cena_max">Maximálna cena:</label>
+            <input type="number" name="cena_max">
+            <label for="zoradenie">Zoradiť:</label>
+            <select name="zoradenie" id="zoradenie">
+            <?php
+                if($zoradenie == 'desc'){
+                    echo '<option value="desc">Od Z po A</option>';
+                    echo '<option value="asc">Od A po Z</option>';
+                }
+                else{
+                    echo '<option value="asc">Od A po Z</option>';
+                    echo '<option value="desc">Od Z po A</option>';
+                }
+            ?>
+            
+                
+            </select>
+            <input type="submit" value="Filtrovať/Zoradiť">
+        </form>
+        <!-- Tabuľka s produktmi -->
         <table>
             <tr>
                 <th>ID produktu</th>
                 <th>Názov produktu</th>
+                <th>Cena</th>
+                <th>Cenová kategória</th>
+                <th>Počet</th>
                 <th>Popis produktu</th>
             </tr>
             <?php
+            // Výpis produktov
             if ($pocet > 0) {
                 while ($produkt = $vysledok->fetch_assoc()) {
                     echo "<tr>";
                     echo "<td>" . $produkt['id'] . "</td>";
                     echo "<td>" . $produkt['nazov'] . "</td>";
+                    echo "<td>" . $produkt['cena'] . "</td>";
+                    echo "<td>" . $produkt['kategoria'] . "</td>";
+                    echo "<td>" . $produkt['pocet'] . "</td>";
                     echo "<td><span class='show-description' onclick='showDescription(this)'>Zobraziť popis</span>";
                     echo "<div class='description'>" . $produkt['popis'] . "</div></td>";
                     echo "</tr>";
                 }
             } else {
-                echo "Žiadne výsledky";
+                echo "<tr><td colspan='4'>Žiadne výsledky</td></tr>";
             }
-            
             ?>
         </table>
     </div>
